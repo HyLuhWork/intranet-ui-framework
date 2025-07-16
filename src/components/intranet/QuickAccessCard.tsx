@@ -83,9 +83,20 @@ export const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
   maxItems = 6,
   variant = "default"
 }) => {
-  const { connectors: { connect, drag }, selected } = useNode((state) => ({
-    selected: state.events.selected,
-  }));
+  // Conditionally use Craft.js hooks only when in editor context
+  let connect: any, drag: any, selected = false;
+  
+  try {
+    const node = useNode((state) => ({
+      selected: state.events.selected,
+    }));
+    connect = node.connectors.connect;
+    drag = node.connectors.drag;
+    selected = node.selected;
+  } catch (error) {
+    // Not in Craft.js context, use regular div
+    connect = drag = (ref: any) => ref;
+  }
 
   const displayItems = items.slice(0, maxItems);
 
