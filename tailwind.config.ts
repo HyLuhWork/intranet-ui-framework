@@ -26,7 +26,8 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					hover: 'hsl(var(--primary-hover))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -61,7 +62,50 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Status colors
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))'
+				},
+				// Notification colors
+				notification: {
+					DEFAULT: 'hsl(var(--notification-background))',
+					foreground: 'hsl(var(--notification-foreground))'
+				},
+				// Gamification badges
+				badge: {
+					gold: 'hsl(var(--badge-gold))',
+					silver: 'hsl(var(--badge-silver))',
+					bronze: 'hsl(var(--badge-bronze))'
 				}
+			},
+			// Typography from design tokens
+			fontSize: {
+				'design-xs': ['0.75rem', { lineHeight: '1rem', letterSpacing: '0em' }],
+				'design-xs-medium': ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.15625em', fontWeight: '500' }],
+				'design-sm': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0em' }],
+				'design-base': ['1rem', { lineHeight: '1.5rem', letterSpacing: '0em', fontWeight: '600' }],
+				'design-lg': ['1.125rem', { lineHeight: '1.75rem', fontWeight: '700' }],
+				'design-xl': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '800' }],
+			},
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				inter: ['Inter', 'system-ui', 'sans-serif'],
+			},
+			// Custom shadows from design tokens
+			boxShadow: {
+				'design-sm': 'var(--shadow-sm)',
+				'design-md': 'var(--shadow-md)',
+				'design-lg': 'var(--shadow-lg)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
