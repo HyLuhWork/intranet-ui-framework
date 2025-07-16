@@ -322,6 +322,10 @@ const Documentation: React.FC = () => {
                           <Badge variant="secondary">maxItems</Badge>
                           <span className="text-design-sm">Quantidade máxima de itens exibidos</span>
                         </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">colunas</Badge>
+                          <span className="text-design-sm">Grid responsivo com máximo de 3 colunas</span>
+                        </div>
                       </div>
                     </div>
                     
