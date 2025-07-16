@@ -301,16 +301,59 @@ const Documentation: React.FC = () => {
                 </div>
                 
                 <div>
-                  <h2 className="text-design-lg font-inter font-bold mb-4">Layouts</h2>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">grid</Badge>
-                      <span className="text-design-sm">Grade de itens</span>
+                  <h2 className="text-design-lg font-inter font-bold mb-4">Tipos de Personalização do Acesso Rápido</h2>
+                  <p className="text-design-base text-muted-foreground mb-4">
+                    O componente de Acesso Rápido oferece diversas opções de personalização para atender às necessidades do seu projeto:
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <h3 className="text-design-base font-inter font-semibold">Layout e Apresentação</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">layout</Badge>
+                          <span className="text-design-sm">"grid" | "list" - Grade ou lista vertical</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">variant</Badge>
+                          <span className="text-design-sm">"default" | "compact" | "featured" - Estilos diferentes</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">maxItems</Badge>
+                          <span className="text-design-sm">Quantidade máxima de itens exibidos</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">list</Badge>
-                      <span className="text-design-sm">Lista vertical</span>
+                    
+                    <div className="space-y-3">
+                      <h3 className="text-design-base font-inter font-semibold">Controle de Conteúdo</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">showDescriptions</Badge>
+                          <span className="text-design-sm">Mostrar/ocultar descrições dos itens</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">showCategories</Badge>
+                          <span className="text-design-sm">Mostrar/ocultar badges de categoria</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">title</Badge>
+                          <span className="text-design-sm">Título personalizado do cartão</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">items</Badge>
+                          <span className="text-design-sm">Array de itens personalizados</span>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
+                    <h4 className="text-design-base font-inter font-semibold mb-2">💡 Dica para Desenvolvedores</h4>
+                    <p className="text-design-sm text-muted-foreground">
+                      Use o painel de propriedades do Craft.js para ajustar todas essas configurações visualmente, 
+                      ou configure as props diretamente no código. Cada item pode ter ícone, cor, categoria e status de destaque.
+                    </p>
                   </div>
                 </div>
 
