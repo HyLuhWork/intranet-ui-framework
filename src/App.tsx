@@ -3,10 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import Index from "./pages/Index";
 import Documentation from "./pages/Documentation";
 import NotFound from "./pages/NotFound";
 import { OrganizationalStructure } from "./components/intranet/OrganizationalStructure";
+
+const OrganizationalStructureView = lazy(() => import("./pages/OrganizationalStructureView"));
 
 const queryClient = new QueryClient();
 
@@ -19,6 +22,11 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/docs" element={<Documentation />} />
+          <Route path="/organizational-structure" element={
+            <Suspense fallback={<div>Carregando...</div>}>
+              <OrganizationalStructureView />
+            </Suspense>
+          } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

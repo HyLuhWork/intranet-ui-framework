@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { useNode } from '@craftjs/core';
-import { ChevronDown, ChevronRight, File, Folder, FolderPlus, Plus, Share2, Upload, User, Users } from 'lucide-react';
+import { ChevronDown, ChevronRight, File, Folder, FolderPlus, ImageIcon, Info, Plus, Share2, Upload, User, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import orgStructureCover from '@/assets/org-structure-cover.jpg';
 
 declare module '@craftjs/core' {
   interface ComponentEvents {
@@ -29,6 +33,7 @@ interface Document {
   size: string;
   lastModified: string;
   sharedWith?: string[];
+  sharingType?: 'general' | 'specific' | 'organization';
 }
 
 interface Folder {
@@ -37,6 +42,7 @@ interface Folder {
   documents: Document[];
   subFolders?: Folder[];
   isExpanded?: boolean;
+  sharingType?: 'general' | 'specific' | 'organization';
 }
 
 interface Person {
@@ -62,9 +68,9 @@ const defaultPeople: Person[] = [
 ];
 
 const defaultDocuments: Document[] = [
-  { id: '1', name: 'Relatório Mensal.pdf', type: 'PDF', size: '2.5 MB', lastModified: '2023-05-15' },
-  { id: '2', name: 'Procedimentos.docx', type: 'DOCX', size: '1.8 MB', lastModified: '2023-06-02' },
-  { id: '3', name: 'Organograma.png', type: 'PNG', size: '4.2 MB', lastModified: '2023-04-30', sharedWith: ['1', '2'] },
+  { id: '1', name: 'Relatório Mensal.pdf', type: 'PDF', size: '2.5 MB', lastModified: '2023-05-15', sharingType: 'organization' },
+  { id: '2', name: 'Procedimentos.docx', type: 'DOCX', size: '1.8 MB', lastModified: '2023-06-02', sharingType: 'general' },
+  { id: '3', name: 'Organograma.png', type: 'PNG', size: '4.2 MB', lastModified: '2023-04-30', sharedWith: ['1', '2'], sharingType: 'specific' },
 ];
 
 const defaultFolders: Folder[] = [
@@ -72,9 +78,10 @@ const defaultFolders: Folder[] = [
     id: '1', 
     name: 'Geral', 
     documents: defaultDocuments,
+    sharingType: 'general',
     subFolders: [
-      { id: '1-1', name: 'Relatórios', documents: [] },
-      { id: '1-2', name: 'Procedimentos', documents: [] }
+      { id: '1-1', name: 'Relatórios', documents: [], sharingType: 'organization' },
+      { id: '1-2', name: 'Procedimentos', documents: [], sharingType: 'specific' }
     ],
     isExpanded: true
   }
@@ -277,11 +284,85 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
               <div className="flex-1 flex items-center">
                 <Folder className="h-4 w-4 mr-2 text-primary" />
                 <span className="text-design-sm">{folder.name}</span>
+                {folder.sharingType && (
+                  <Badge 
+                    variant={
+                      folder.sharingType === 'general' 
+                        ? "default" 
+                        : folder.sharingType === 'specific' 
+                          ? "secondary" 
+                          : "outline"
+                    } 
+                    className={`text-design-xs ml-2 ${
+                      folder.sharingType === 'general' 
+                        ? "bg-success text-success-foreground" 
+                        : folder.sharingType === 'specific'
+                          ? "bg-warning text-warning-foreground"
+                          : ""
+                    }`}
+                  >
+                    {folder.sharingType === 'general' 
+                      ? "Geral" 
+                      : folder.sharingType === 'specific' 
+                        ? "Compartilhado" 
+                        : "Restrito"}
+                  </Badge>
+                )}
               </div>
               
-              <Button variant="ghost" size="icon" className="h-6 w-6">
-                <Share2 className="h-3 w-3" />
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Share2 className="h-3 w-3" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Compartilhar Pasta</DialogTitle>
+                    <DialogDescription>
+                      Defina as permissões de acesso para a pasta "{folder.name}"
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="p-4 space-y-4">
+                    <RadioGroup defaultValue={folder.sharingType || 'organization'} className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="general" id="general" />
+                        <Label htmlFor="general" className="flex items-center cursor-pointer">
+                          <span className="font-medium">Geral</span>
+                          <span className="text-muted-foreground text-design-xs ml-2">
+                            - Acessível a todos na empresa
+                          </span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="organization" id="organization" />
+                        <Label htmlFor="organization" className="flex items-center cursor-pointer">
+                          <span className="font-medium">Restrito à Estrutura</span>
+                          <span className="text-muted-foreground text-design-xs ml-2">
+                            - Apenas pessoas vinculadas a esta estrutura
+                          </span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="specific" id="specific" />
+                        <Label htmlFor="specific" className="flex items-center cursor-pointer">
+                          <span className="font-medium">Pessoas Específicas</span>
+                          <span className="text-muted-foreground text-design-xs ml-2">
+                            - Selecionar indivíduos específicos
+                          </span>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  <DialogFooter className="sm:justify-start">
+                    <DialogClose asChild>
+                      <Button type="button" variant="secondary">
+                        Salvar
+                      </Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
             
             {folder.documents.length > 0 && folder.isExpanded && (
@@ -292,9 +373,28 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
                       <File className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="text-design-sm">{doc.name}</span>
                       <Badge variant="outline" className="text-design-xs ml-2">{doc.type}</Badge>
-                      {doc.sharedWith && doc.sharedWith.length > 0 && (
-                        <Badge variant="secondary" className="text-design-xs ml-2">
-                          Compartilhado
+                      {doc.sharingType && (
+                        <Badge 
+                          variant={
+                            doc.sharingType === 'general' 
+                              ? "default" 
+                              : doc.sharingType === 'specific' 
+                                ? "secondary" 
+                                : "outline"
+                          } 
+                          className={`text-design-xs ml-2 ${
+                            doc.sharingType === 'general' 
+                              ? "bg-success text-success-foreground" 
+                              : doc.sharingType === 'specific'
+                                ? "bg-warning text-warning-foreground"
+                                : ""
+                          }`}
+                        >
+                          {doc.sharingType === 'general' 
+                            ? "Geral" 
+                            : doc.sharingType === 'specific' 
+                              ? "Compartilhado" 
+                              : "Restrito"}
                         </Badge>
                       )}
                     </div>
@@ -347,19 +447,28 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
           <div className="w-full lg:w-2/3">
             {selectedUnit ? (
               <div>
-                <div className="mb-6 bg-muted/20 rounded-lg p-6 border border-border">
-                  <h3 className="text-design-lg font-inter font-semibold mb-2">{selectedUnit.title}</h3>
-                  {selectedUnit.description && (
-                    <p className="text-design-sm text-muted-foreground mb-4">{selectedUnit.description}</p>
-                  )}
-                  <div className="flex space-x-2">
-                    <Badge 
-                      variant={selectedUnit.isActive ? "secondary" : "outline"}
-                      className={selectedUnit.isActive ? "bg-success text-success-foreground" : ""}
-                    >
-                      {selectedUnit.isActive ? "Ativo" : "Inativo"}
-                    </Badge>
-                    <Badge variant="secondary">ID: {selectedUnit.id}</Badge>
+                <div className="mb-6 rounded-lg border border-border overflow-hidden">
+                  <div className="relative h-48 w-full overflow-hidden bg-muted">
+                    <img 
+                      src={selectedUnit.coverImage || orgStructureCover} 
+                      alt={`${selectedUnit.title} cover`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
+                      <h3 className="text-design-lg font-inter font-semibold mb-2 text-white">{selectedUnit.title}</h3>
+                      {selectedUnit.description && (
+                        <p className="text-design-sm text-white/80 mb-4">{selectedUnit.description}</p>
+                      )}
+                      <div className="flex space-x-2">
+                        <Badge 
+                          variant={selectedUnit.isActive ? "secondary" : "outline"}
+                          className={selectedUnit.isActive ? "bg-success text-success-foreground" : "border-white text-white"}
+                        >
+                          {selectedUnit.isActive ? "Ativo" : "Inativo"}
+                        </Badge>
+                        <Badge variant="secondary">ID: {selectedUnit.id}</Badge>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -484,10 +593,75 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
                           <Upload className="h-3 w-3 mr-1" />
                           Upload
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <FolderPlus className="h-3 w-3 mr-1" />
-                          Nova Pasta
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <FolderPlus className="h-3 w-3 mr-1" />
+                              Nova Pasta
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Criar Nova Pasta</DialogTitle>
+                              <DialogDescription>
+                                Adicione uma nova pasta e defina suas permissões de acesso
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="p-4 space-y-4">
+                              <div>
+                                <label className="text-design-xs-medium block mb-1">NOME DA PASTA</label>
+                                <input
+                                  type="text"
+                                  className="w-full px-3 py-2 border border-border rounded-md text-design-sm"
+                                  placeholder="Digite o nome da pasta"
+                                />
+                              </div>
+                              
+                              <div>
+                                <label className="text-design-xs-medium block mb-2">TIPO DE COMPARTILHAMENTO</label>
+                                <RadioGroup defaultValue="organization" className="space-y-3">
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="general" id="create-general" />
+                                    <Label htmlFor="create-general" className="flex items-center cursor-pointer">
+                                      <span className="font-medium">Geral</span>
+                                      <span className="text-muted-foreground text-design-xs ml-2">
+                                        - Acessível a todos na empresa
+                                      </span>
+                                    </Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="organization" id="create-organization" />
+                                    <Label htmlFor="create-organization" className="flex items-center cursor-pointer">
+                                      <span className="font-medium">Restrito à Estrutura</span>
+                                      <span className="text-muted-foreground text-design-xs ml-2">
+                                        - Apenas pessoas vinculadas a esta estrutura
+                                      </span>
+                                    </Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="specific" id="create-specific" />
+                                    <Label htmlFor="create-specific" className="flex items-center cursor-pointer">
+                                      <span className="font-medium">Pessoas Específicas</span>
+                                      <span className="text-muted-foreground text-design-xs ml-2">
+                                        - Selecionar indivíduos específicos
+                                      </span>
+                                    </Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                            </div>
+                            <DialogFooter className="sm:justify-start">
+                              <DialogClose asChild>
+                                <Button type="button" variant="secondary">
+                                  Cancelar
+                                </Button>
+                              </DialogClose>
+                              <Button type="button">
+                                Criar Pasta
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
                     
