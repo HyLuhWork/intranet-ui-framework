@@ -4,6 +4,7 @@ import { AnnouncementCard } from '@/components/intranet/AnnouncementCard';
 import { NewsFeed } from '@/components/intranet/NewsFeed';
 import { BirthdayCard } from '@/components/intranet/BirthdayCard';
 import { QuickAccessCard } from '@/components/intranet/QuickAccessCard';
+import { OrganizationalStructure } from '@/components/intranet/OrganizationalStructure';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -917,13 +918,9 @@ import { QuickAccessCard } from '@/components/QuickAccessCard';
                   <div className="space-y-4">
                     <div className="border border-border rounded-lg p-4">
                       <p className="text-design-sm text-muted-foreground mb-4">
-                        Demonstração simplificada do componente:
+                        Demonstração do componente:
                       </p>
-                      <img 
-                        src="/placeholder.svg" 
-                        alt="Exemplo de Estrutura Organizacional" 
-                        className="w-full h-auto max-h-96 object-contain rounded-md" 
-                      />
+                      <OrganizationalStructure />
                     </div>
                   </div>
                 </div>
@@ -1009,35 +1006,69 @@ import { QuickAccessCard } from '@/components/QuickAccessCard';
             </div>
           </div>
         );
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
-                    <h4 className="text-design-base font-inter font-semibold mb-2">💡 Dica para Desenvolvedores</h4>
-                    <p className="text-design-sm text-muted-foreground">
-                      A estrutura organizacional é projetada para integração com backend, permitindo conexão com APIs
-                      para gestão de documentos e controle de acesso baseado em hierarquia.
-                    </p>
-                  </div>
-                </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">grid</Badge>
-                      <span className="text-design-sm">Grade de itens</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">list</Badge>
-                      <span className="text-design-sm">Lista vertical</span>
-                    </div>
-                  </div>
-                </div>
 
                 <div>
-                  <h2 className="text-design-lg font-inter font-bold mb-4">Código Completo</h2>
-                  <p className="text-design-base text-muted-foreground mb-4">
-                    Aqui está o código completo do componente, pronto para uso no seu projeto Next.js com Craft.js:
-                  </p>
-                  
+                  <h2 className="text-design-lg font-inter font-bold mb-4">Propriedades</h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-border">
+                      <thead>
+                        <tr className="bg-muted">
+                          <th className="border border-border px-4 py-2 text-left text-design-sm font-medium">Propriedade</th>
+                          <th className="border border-border px-4 py-2 text-left text-design-sm font-medium">Tipo</th>
+                          <th className="border border-border px-4 py-2 text-left text-design-sm font-medium">Padrão</th>
+                          <th className="border border-border px-4 py-2 text-left text-design-sm font-medium">Descrição</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="border border-border px-4 py-2 text-design-sm font-mono">title</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">string</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">"Estrutura Organizacional"</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">Título do componente</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border px-4 py-2 text-design-sm font-mono">showDocuments</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">boolean</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">true</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">Exibe a gestão de documentos</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border px-4 py-2 text-design-sm font-mono">showPeople</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">boolean</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">true</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">Exibe pessoas vinculadas</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+        
+      case 'announcement-card':
+        return (
+          <div className="space-y-8">
+            <div>
+              <h1 className="text-design-xl font-inter font-bold mb-4">Card de Comunicado</h1>
+              <p className="text-design-base text-muted-foreground mb-6">
+                O Card de Comunicado é usado para exibir avisos, comunicados e 
+                informações importantes para os usuários de forma destacada.
+              </p>
+              
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-design-lg font-inter font-bold mb-4">Exemplos</h2>
+                  <div className="space-y-4">
+                    <AnnouncementCard />
+                    <AnnouncementCard variant="urgent" title="Manutenção Programada" 
+                                     content="Sistema estará indisponível das 02:00 às 06:00 para manutenção." />
+                  </div>
+                </div>
+                
+                <div>
+                  <h2 className="text-design-lg font-inter font-bold mb-4">Código</h2>
                   <div className="bg-muted p-4 rounded-lg">
                     <pre className="text-design-sm text-muted-foreground overflow-x-auto whitespace-pre-wrap">
 {`// components/QuickAccessCard.tsx
