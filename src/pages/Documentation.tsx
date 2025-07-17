@@ -61,7 +61,8 @@ const Documentation: React.FC = () => {
         { id: 'announcement-card', title: 'Card de Comunicado' },
         { id: 'news-feed', title: 'Feed de Notícias' },
         { id: 'birthday-card', title: 'Card de Aniversário' },
-        { id: 'quick-access', title: 'Acesso Rápido' }
+        { id: 'quick-access', title: 'Acesso Rápido' },
+        { id: 'organizational-structure', title: 'Estrutura Organizacional' }
       ]
     }
   ];
@@ -900,28 +901,125 @@ import { QuickAccessCard } from '@/components/QuickAccessCard';
           </div>
         );
         
-      case 'quick-access':
+      case 'organizational-structure':
         return (
           <div className="space-y-8">
             <div>
-              <h1 className="text-design-xl font-inter font-bold mb-4">Acesso Rápido</h1>
+              <h1 className="text-design-xl font-inter font-bold mb-4">Estrutura Organizacional</h1>
               <p className="text-design-base text-muted-foreground mb-6">
-                O componente de Acesso Rápido fornece links diretos para sistemas 
-                e ferramentas importantes da empresa de forma organizada e visual.
+                O componente de Estrutura Organizacional permite visualizar e gerenciar 
+                a hierarquia organizacional da empresa com gestão integrada de documentos.
               </p>
               
               <div className="space-y-6">
                 <div>
                   <h2 className="text-design-lg font-inter font-bold mb-4">Exemplos</h2>
                   <div className="space-y-4">
-                    <QuickAccessCard />
-                    <QuickAccessCard variant="compact" layout="grid" />
-                    <QuickAccessCard variant="featured" />
+                    <div className="border border-border rounded-lg p-4">
+                      <p className="text-design-sm text-muted-foreground mb-4">
+                        Demonstração simplificada do componente:
+                      </p>
+                      <img 
+                        src="/placeholder.svg" 
+                        alt="Exemplo de Estrutura Organizacional" 
+                        className="w-full h-auto max-h-96 object-contain rounded-md" 
+                      />
+                    </div>
                   </div>
                 </div>
                 
                 <div>
-                  <h2 className="text-design-lg font-inter font-bold mb-4">Layouts</h2>
+                  <h2 className="text-design-lg font-inter font-bold mb-4">Tipos de Personalização da Estrutura Organizacional</h2>
+                  <p className="text-design-base text-muted-foreground mb-4">
+                    O componente de Estrutura Organizacional oferece diversas opções de personalização para atender às necessidades específicas:
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <h3 className="text-design-base font-inter font-semibold">Gestão de Hierarquia</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">structureData</Badge>
+                          <span className="text-design-sm">Dados da estrutura hierárquica</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">expandable</Badge>
+                          <span className="text-design-sm">Nós expansíveis com filhos</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">dragDrop</Badge>
+                          <span className="text-design-sm">Reorganização via drag and drop</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <h3 className="text-design-base font-inter font-semibold">Gestão de Documentos</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">showDocuments</Badge>
+                          <span className="text-design-sm">Ativar/desativar gestão de documentos</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">showPeople</Badge>
+                          <span className="text-design-sm">Mostrar pessoas vinculadas</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">defaultFolders</Badge>
+                          <span className="text-design-sm">Pastas padrão para novos nós</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="text-design-lg font-inter font-bold mb-4">Propriedades</h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-border">
+                      <thead>
+                        <tr className="bg-muted">
+                          <th className="border border-border px-4 py-2 text-left text-design-sm font-medium">Propriedade</th>
+                          <th className="border border-border px-4 py-2 text-left text-design-sm font-medium">Tipo</th>
+                          <th className="border border-border px-4 py-2 text-left text-design-sm font-medium">Padrão</th>
+                          <th className="border border-border px-4 py-2 text-left text-design-sm font-medium">Descrição</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="border border-border px-4 py-2 text-design-sm font-mono">title</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">string</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">"Estrutura Organizacional"</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">Título do componente</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border px-4 py-2 text-design-sm font-mono">showDocuments</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">boolean</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">true</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">Exibe a gestão de documentos</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border px-4 py-2 text-design-sm font-mono">showPeople</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">boolean</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">true</td>
+                          <td className="border border-border px-4 py-2 text-design-sm">Exibe pessoas vinculadas</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
+                    <h4 className="text-design-base font-inter font-semibold mb-2">💡 Dica para Desenvolvedores</h4>
+                    <p className="text-design-sm text-muted-foreground">
+                      A estrutura organizacional é projetada para integração com backend, permitindo conexão com APIs
+                      para gestão de documentos e controle de acesso baseado em hierarquia.
+                    </p>
+                  </div>
+                </div>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Badge variant="secondary">grid</Badge>
