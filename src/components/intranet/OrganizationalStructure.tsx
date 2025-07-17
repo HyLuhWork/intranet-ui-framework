@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { useNode } from '@craftjs/core';
-import { ChevronDown, ChevronRight, File, Folder, FolderPlus, ImageIcon, Info, Plus, Share2, Upload, User, Users, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, File, Folder, FolderPlus, ImageIcon, Info, Plus, Share2, Upload, User, Users, X, Search, Grid3X3, List, ChevronLeft, Settings, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import orgStructureCover from '@/assets/org-structure-cover.jpg';
 
 declare module '@craftjs/core' {
@@ -34,6 +38,7 @@ interface Document {
   lastModified: string;
   sharedWith?: string[];
   sharingType?: 'general' | 'specific' | 'organization';
+  ownerId: string;
 }
 
 interface Folder {
@@ -43,6 +48,8 @@ interface Folder {
   subFolders?: Folder[];
   isExpanded?: boolean;
   sharingType?: 'general' | 'specific' | 'organization';
+  ownerId: string;
+  sharedWith?: string[];
 }
 
 interface Person {
@@ -68,9 +75,9 @@ const defaultPeople: Person[] = [
 ];
 
 const defaultDocuments: Document[] = [
-  { id: '1', name: 'Relatório Mensal.pdf', type: 'PDF', size: '2.5 MB', lastModified: '2023-05-15', sharingType: 'organization' },
-  { id: '2', name: 'Procedimentos.docx', type: 'DOCX', size: '1.8 MB', lastModified: '2023-06-02', sharingType: 'general' },
-  { id: '3', name: 'Organograma.png', type: 'PNG', size: '4.2 MB', lastModified: '2023-04-30', sharedWith: ['1', '2'], sharingType: 'specific' },
+  { id: '1', name: 'Relatório Mensal.pdf', type: 'PDF', size: '2.5 MB', lastModified: '2023-05-15', sharingType: 'organization', ownerId: '1' },
+  { id: '2', name: 'Procedimentos.docx', type: 'DOCX', size: '1.8 MB', lastModified: '2023-06-02', sharingType: 'general', ownerId: '1' },
+  { id: '3', name: 'Organograma.png', type: 'PNG', size: '4.2 MB', lastModified: '2023-04-30', sharedWith: ['1', '2'], sharingType: 'specific', ownerId: '2' },
 ];
 
 const defaultFolders: Folder[] = [
@@ -79,9 +86,10 @@ const defaultFolders: Folder[] = [
     name: 'Geral', 
     documents: defaultDocuments,
     sharingType: 'general',
+    ownerId: '1',
     subFolders: [
-      { id: '1-1', name: 'Relatórios', documents: [], sharingType: 'organization' },
-      { id: '1-2', name: 'Procedimentos', documents: [], sharingType: 'specific' }
+      { id: '1-1', name: 'Relatórios', documents: [], sharingType: 'organization', ownerId: '1' },
+      { id: '1-2', name: 'Procedimentos', documents: [], sharingType: 'specific', ownerId: '2', sharedWith: ['1', '3'] }
     ],
     isExpanded: true
   }
@@ -172,6 +180,10 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
   const [folders, setFolders] = useState(defaultFolders);
   const [people] = useState(defaultPeople);
   const [activeTab, setActiveTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [currentFolderPath, setCurrentFolderPath] = useState<string[]>([]);
+  const [currentFolder, setCurrentFolder] = useState<Folder | null>(null);
 
   const toggleExpand = (unitId: string) => {
     const updateExpanded = (units: OrganizationalUnit[]): OrganizationalUnit[] => {
@@ -208,6 +220,99 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
   const handleUnitClick = (unit: OrganizationalUnit) => {
     setSelectedUnit(unit);
     setActiveTab('overview');
+    setCurrentFolderPath([]);
+    setCurrentFolder(null);
+  };
+
+  const navigateToFolder = (folder: Folder, path: string[]) => {
+    setCurrentFolder(folder);
+    setCurrentFolderPath(path);
+  };
+
+  const navigateBack = () => {
+    if (currentFolderPath.length > 0) {
+      const newPath = currentFolderPath.slice(0, -1);
+      if (newPath.length === 0) {
+        setCurrentFolder(null);
+        setCurrentFolderPath([]);
+      } else {
+        // Find parent folder
+        const findFolderByPath = (folders: Folder[], path: string[]): Folder | null => {
+          if (path.length === 0) return null;
+          
+          for (const folder of folders) {
+            if (folder.name === path[0]) {
+              if (path.length === 1) return folder;
+              if (folder.subFolders) {
+                const result = findFolderByPath(folder.subFolders, path.slice(1));
+                if (result) return result;
+              }
+            }
+          }
+          return null;
+        };
+        
+        const parentFolder = findFolderByPath(folders, newPath);
+        setCurrentFolder(parentFolder);
+        setCurrentFolderPath(newPath);
+      }
+    }
+  };
+
+  const getPersonById = (id: string) => people.find(p => p.id === id);
+
+  const filteredDocuments = currentFolder?.documents.filter(doc =>
+    doc.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  const renderBreadcrumb = () => {
+    if (!selectedUnit || currentFolderPath.length === 0) return null;
+
+    return (
+      <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
+        <button
+          onClick={() => navigateBack()}
+          className="hover:text-foreground transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <span>{selectedUnit.title}</span>
+        {currentFolderPath.map((folderName, index) => (
+          <React.Fragment key={index}>
+            <ChevronRight className="h-3 w-3" />
+            <button
+              onClick={() => {
+                const newPath = currentFolderPath.slice(0, index + 1);
+                // Navigate to this specific folder
+                const findFolderByPath = (folders: Folder[], path: string[]): Folder | null => {
+                  if (path.length === 0) return null;
+                  
+                  for (const folder of folders) {
+                    if (folder.name === path[0]) {
+                      if (path.length === 1) return folder;
+                      if (folder.subFolders) {
+                        const result = findFolderByPath(folder.subFolders, path.slice(1));
+                        if (result) return result;
+                      }
+                    }
+                  }
+                  return null;
+                };
+                
+                const targetFolder = findFolderByPath(folders, newPath);
+                if (targetFolder) {
+                  setCurrentFolder(targetFolder);
+                  setCurrentFolderPath(newPath);
+                }
+              }}
+              className="hover:text-foreground transition-colors"
+            >
+              {folderName}
+            </button>
+          </React.Fragment>
+        ))}
+      </div>
+    );
   };
 
   const renderStructureTree = (units: OrganizationalUnit[], level = 0) => {
@@ -265,10 +370,14 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
           <li key={folder.id} className="mb-1">
             <div 
               className="flex items-center p-2 rounded-md cursor-pointer hover:bg-muted"
+              onClick={() => navigateToFolder(folder, [...currentFolderPath, folder.name])}
             >
               <button 
                 className="mr-1 text-muted-foreground hover:text-foreground"
-                onClick={() => toggleFolderExpand(folder.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFolderExpand(folder.id);
+                }}
               >
                 {folder.subFolders && folder.subFolders.length > 0 ? (
                   folder.isExpanded ? (
@@ -284,46 +393,122 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
               <div className="flex-1 flex items-center">
                 <Folder className="h-4 w-4 mr-2 text-primary" />
                 <span className="text-design-sm">{folder.name}</span>
+                
+                {/* Owner indicator */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center ml-2">
+                        <Crown className="h-3 w-3 text-yellow-500 mr-1" />
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={getPersonById(folder.ownerId)?.avatar} />
+                          <AvatarFallback className="text-xs">
+                            {getPersonById(folder.ownerId)?.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Proprietário: {getPersonById(folder.ownerId)?.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
                 {folder.sharingType && (
-                  <Badge 
-                    variant={
-                      folder.sharingType === 'general' 
-                        ? "default" 
-                        : folder.sharingType === 'specific' 
-                          ? "secondary" 
-                          : "outline"
-                    } 
-                    className={`text-design-xs ml-2 ${
-                      folder.sharingType === 'general' 
-                        ? "bg-success text-success-foreground" 
-                        : folder.sharingType === 'specific'
-                          ? "bg-warning text-warning-foreground"
-                          : ""
-                    }`}
-                  >
-                    {folder.sharingType === 'general' 
-                      ? "Geral" 
-                      : folder.sharingType === 'specific' 
-                        ? "Compartilhado" 
-                        : "Restrito"}
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge 
+                          variant={
+                            folder.sharingType === 'general' 
+                              ? "default" 
+                              : folder.sharingType === 'specific' 
+                                ? "secondary" 
+                                : "outline"
+                          } 
+                          className={`text-design-xs ml-2 cursor-help ${
+                            folder.sharingType === 'general' 
+                              ? "bg-success text-success-foreground" 
+                              : folder.sharingType === 'specific'
+                                ? "bg-warning text-warning-foreground"
+                                : ""
+                          }`}
+                        >
+                          {folder.sharingType === 'general' 
+                            ? "Geral" 
+                            : folder.sharingType === 'specific' 
+                              ? "Compartilhado" 
+                              : "Restrito"}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="space-y-2">
+                          <p className="font-medium">
+                            {folder.sharingType === 'general' 
+                              ? "Acesso Geral" 
+                              : folder.sharingType === 'specific' 
+                                ? "Acesso Específico" 
+                                : "Acesso Restrito"}
+                          </p>
+                          {folder.sharingType === 'specific' && folder.sharedWith && (
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground">Compartilhado com:</p>
+                              {folder.sharedWith.map(personId => {
+                                const person = getPersonById(personId);
+                                return person ? (
+                                  <div key={personId} className="flex items-center space-x-2">
+                                    <Avatar className="h-4 w-4">
+                                      <AvatarImage src={person.avatar} />
+                                      <AvatarFallback className="text-xs">
+                                        {person.name.charAt(0)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-xs">{person.name}</span>
+                                  </div>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
               
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
                     <Share2 className="h-3 w-3" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Compartilhar Pasta</DialogTitle>
+                    <DialogTitle>Gerenciar Pasta</DialogTitle>
                     <DialogDescription>
-                      Defina as permissões de acesso para a pasta "{folder.name}"
+                      Configure permissões e proprietário da pasta "{folder.name}"
                     </DialogDescription>
                   </DialogHeader>
                   <div className="p-4 space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium">Proprietário Atual</Label>
+                      <div className="flex items-center space-x-2 mt-2 p-2 bg-muted rounded-lg">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={getPersonById(folder.ownerId)?.avatar} />
+                          <AvatarFallback className="text-xs">
+                            {getPersonById(folder.ownerId)?.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{getPersonById(folder.ownerId)?.name}</span>
+                        <Button variant="outline" size="sm" className="ml-auto">
+                          <Settings className="h-3 w-3 mr-1" />
+                          Transferir
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
                     <RadioGroup defaultValue={folder.sharingType || 'organization'} className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="general" id="general" />
@@ -585,18 +770,49 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
                 )}
                 
                 {activeTab === 'documents' && showDocuments && (
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-design-base font-inter font-semibold">Documentos</h4>
+                  <div className="mt-6">
+                    {renderBreadcrumb()}
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-design-base font-inter font-semibold">
+                        {currentFolder ? `Pasta: ${currentFolder.name}` : 'Documentos'}
+                      </h4>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Upload className="h-3 w-3 mr-1" />
-                          Upload
-                        </Button>
+                        {/* Search */}
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Buscar documentos..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 w-48"
+                          />
+                        </div>
+                        
+                        {/* View Mode Toggle */}
+                        <div className="flex border border-border rounded-md">
+                          <Button
+                            variant={viewMode === 'list' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('list')}
+                            className="rounded-r-none"
+                          >
+                            <List className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('grid')}
+                            className="rounded-l-none border-l"
+                          >
+                            <Grid3X3 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button variant="outline" size="sm">
-                              <FolderPlus className="h-3 w-3 mr-1" />
+                              <FolderPlus className="h-4 w-4 mr-2" />
                               Nova Pasta
                             </Button>
                           </DialogTrigger>
@@ -604,25 +820,25 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
                             <DialogHeader>
                               <DialogTitle>Criar Nova Pasta</DialogTitle>
                               <DialogDescription>
-                                Adicione uma nova pasta e defina suas permissões de acesso
+                                Crie uma nova pasta e defina as permissões de acesso
                               </DialogDescription>
                             </DialogHeader>
                             <div className="p-4 space-y-4">
                               <div>
-                                <label className="text-design-xs-medium block mb-1">NOME DA PASTA</label>
-                                <input
-                                  type="text"
-                                  className="w-full px-3 py-2 border border-border rounded-md text-design-sm"
-                                  placeholder="Digite o nome da pasta"
+                                <Label htmlFor="folder-name">Nome da Pasta</Label>
+                                <Input 
+                                  id="folder-name"
+                                  type="text" 
+                                  placeholder="Digite o nome da pasta..."
+                                  className="mt-1"
                                 />
                               </div>
-                              
                               <div>
-                                <label className="text-design-xs-medium block mb-2">TIPO DE COMPARTILHAMENTO</label>
-                                <RadioGroup defaultValue="organization" className="space-y-3">
+                                <Label>Permissões de Acesso</Label>
+                                <RadioGroup defaultValue="organization" className="space-y-3 mt-2">
                                   <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="general" id="create-general" />
-                                    <Label htmlFor="create-general" className="flex items-center cursor-pointer">
+                                    <RadioGroupItem value="general" id="new-general" />
+                                    <Label htmlFor="new-general" className="flex items-center cursor-pointer">
                                       <span className="font-medium">Geral</span>
                                       <span className="text-muted-foreground text-design-xs ml-2">
                                         - Acessível a todos na empresa
@@ -630,8 +846,8 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
                                     </Label>
                                   </div>
                                   <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="organization" id="create-organization" />
-                                    <Label htmlFor="create-organization" className="flex items-center cursor-pointer">
+                                    <RadioGroupItem value="organization" id="new-organization" />
+                                    <Label htmlFor="new-organization" className="flex items-center cursor-pointer">
                                       <span className="font-medium">Restrito à Estrutura</span>
                                       <span className="text-muted-foreground text-design-xs ml-2">
                                         - Apenas pessoas vinculadas a esta estrutura
@@ -639,8 +855,8 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
                                     </Label>
                                   </div>
                                   <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="specific" id="create-specific" />
-                                    <Label htmlFor="create-specific" className="flex items-center cursor-pointer">
+                                    <RadioGroupItem value="specific" id="new-specific" />
+                                    <Label htmlFor="new-specific" className="flex items-center cursor-pointer">
                                       <span className="font-medium">Pessoas Específicas</span>
                                       <span className="text-muted-foreground text-design-xs ml-2">
                                         - Selecionar indivíduos específicos
@@ -653,39 +869,143 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
                             <DialogFooter className="sm:justify-start">
                               <DialogClose asChild>
                                 <Button type="button" variant="secondary">
-                                  Cancelar
+                                  Criar Pasta
                                 </Button>
                               </DialogClose>
-                              <Button type="button">
-                                Criar Pasta
-                              </Button>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
+                        <Button variant="outline" size="sm">
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload
+                        </Button>
                       </div>
                     </div>
                     
-                    <div className="bg-muted/30 rounded-lg border border-border p-4">
-                      {folders.length === 0 ? (
-                        <p className="text-design-sm text-muted-foreground text-center py-8">
-                          Nenhuma pasta ou documento encontrado
-                        </p>
-                      ) : (
-                        renderFolderTree(folders)
-                      )}
-                    </div>
+                    {currentFolder ? (
+                      <div>
+                        {/* Current folder documents */}
+                        {filteredDocuments.length > 0 && (
+                          <div className={`mb-6 ${viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' : 'space-y-2'}`}>
+                            {filteredDocuments.map(doc => (
+                              <div 
+                                key={doc.id} 
+                                className={`${viewMode === 'grid' ? 'p-4 border border-border rounded-lg hover:bg-muted/50' : 'flex items-center p-2 rounded-md hover:bg-muted'}`}
+                              >
+                                <File className={`h-4 w-4 text-muted-foreground ${viewMode === 'grid' ? 'mb-2' : 'mr-2'}`} />
+                                <div className={`${viewMode === 'grid' ? 'space-y-1' : 'flex-1 flex items-center'}`}>
+                                  <span className={`text-design-sm ${viewMode === 'grid' ? 'block' : ''}`}>{doc.name}</span>
+                                  <div className={`flex items-center space-x-2 ${viewMode === 'grid' ? 'mt-2' : 'ml-auto'}`}>
+                                    <Badge variant="outline" className="text-design-xs">{doc.type}</Badge>
+                                    
+                                    {/* Owner indicator */}
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="flex items-center">
+                                            <Crown className="h-3 w-3 text-yellow-500 mr-1" />
+                                            <Avatar className="h-4 w-4">
+                                              <AvatarImage src={getPersonById(doc.ownerId)?.avatar} />
+                                              <AvatarFallback className="text-xs">
+                                                {getPersonById(doc.ownerId)?.name.charAt(0)}
+                                              </AvatarFallback>
+                                            </Avatar>
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Proprietário: {getPersonById(doc.ownerId)?.name}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+
+                                    {doc.sharingType && (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Badge 
+                                              variant={
+                                                doc.sharingType === 'general' 
+                                                  ? "default" 
+                                                  : doc.sharingType === 'specific' 
+                                                    ? "secondary" 
+                                                    : "outline"
+                                              } 
+                                              className={`text-design-xs cursor-help ${
+                                                doc.sharingType === 'general' 
+                                                  ? "bg-success text-success-foreground" 
+                                                  : doc.sharingType === 'specific'
+                                                    ? "bg-warning text-warning-foreground"
+                                                    : ""
+                                              }`}
+                                            >
+                                              {doc.sharingType === 'general' 
+                                                ? "Geral" 
+                                                : doc.sharingType === 'specific' 
+                                                  ? "Compartilhado" 
+                                                  : "Restrito"}
+                                            </Badge>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <div className="space-y-2">
+                                              <p className="font-medium">
+                                                {doc.sharingType === 'general' 
+                                                  ? "Acesso Geral" 
+                                                  : doc.sharingType === 'specific' 
+                                                    ? "Acesso Específico" 
+                                                    : "Acesso Restrito"}
+                                              </p>
+                                              {doc.sharingType === 'specific' && doc.sharedWith && (
+                                                <div className="space-y-1">
+                                                  <p className="text-xs text-muted-foreground">Compartilhado com:</p>
+                                                  {doc.sharedWith.map(personId => {
+                                                    const person = getPersonById(personId);
+                                                    return person ? (
+                                                      <div key={personId} className="flex items-center space-x-2">
+                                                        <Avatar className="h-4 w-4">
+                                                          <AvatarImage src={person.avatar} />
+                                                          <AvatarFallback className="text-xs">
+                                                            {person.name.charAt(0)}
+                                                          </AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="text-xs">{person.name}</span>
+                                                      </div>
+                                                    ) : null;
+                                                  })}
+                                                </div>
+                                              )}
+                                            </div>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Subfolders */}
+                        {currentFolder.subFolders && currentFolder.subFolders.length > 0 && (
+                          <div>
+                            <Separator className="my-4" />
+                            <h5 className="text-design-sm font-medium mb-3">Subpastas</h5>
+                            {renderFolderTree(currentFolder.subFolders)}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      renderFolderTree(folders)
+                    )}
                   </div>
                 )}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full min-h-[300px] bg-muted/20 rounded-lg border border-border">
-                <div className="text-center p-6">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-design-base font-inter font-semibold mb-2">Selecione uma Estrutura</h3>
-                  <p className="text-design-sm text-muted-foreground mb-4">
-                    Clique em uma estrutura organizacional no painel à esquerda para visualizar seus detalhes.
-                  </p>
-                </div>
+              <div className="text-center py-8">
+                <Info className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-design-sm text-muted-foreground">
+                  Selecione uma estrutura organizacional para ver os detalhes
+                </p>
               </div>
             )}
           </div>
@@ -695,61 +1015,55 @@ export const OrganizationalStructure: React.FC<OrganizationalStructureProps> = (
   );
 };
 
-// Craft.js Settings Panel
+// Add settings for Craft.js
 export const OrganizationalStructureSettings = () => {
-  const { actions: { setProp }, props } = useNode((node) => ({
-    props: node.data.props
+  const { actions: { setProp }, title, description, showDocuments, showPeople } = useNode((node) => ({
+    title: node.data.props.title,
+    description: node.data.props.description,
+    showDocuments: node.data.props.showDocuments,
+    showPeople: node.data.props.showPeople,
   }));
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center space-x-2">
-        <Users className="h-4 w-4" />
-        <span className="text-design-sm font-medium">Configurações de Estrutura Organizacional</span>
+    <div className="space-y-4">
+      <div>
+        <label className="text-design-sm font-medium">Título</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setProp((props: any) => props.title = e.target.value)}
+          className="w-full mt-1 p-2 border border-border rounded-md text-design-sm"
+        />
       </div>
       
-      <div className="space-y-3">
-        <div>
-          <label className="text-design-xs-medium block mb-1">TÍTULO</label>
+      <div>
+        <label className="text-design-sm font-medium">Descrição</label>
+        <textarea
+          value={description}
+          onChange={(e) => setProp((props: any) => props.description = e.target.value)}
+          className="w-full mt-1 p-2 border border-border rounded-md text-design-sm"
+          rows={3}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <label className="flex items-center space-x-2">
           <input
-            type="text"
-            className="w-full px-3 py-2 border border-border rounded-md text-design-sm"
-            value={props.title || ''}
-            onChange={(e) => setProp((props: OrganizationalStructureProps) => props.title = e.target.value)}
+            type="checkbox"
+            checked={showDocuments}
+            onChange={(e) => setProp((props: any) => props.showDocuments = e.target.checked)}
           />
-        </div>
+          <span className="text-design-sm">Mostrar aba de documentos</span>
+        </label>
         
-        <div>
-          <label className="text-design-xs-medium block mb-1">DESCRIÇÃO</label>
+        <label className="flex items-center space-x-2">
           <input
-            type="text"
-            className="w-full px-3 py-2 border border-border rounded-md text-design-sm"
-            value={props.description || ''}
-            onChange={(e) => setProp((props: OrganizationalStructureProps) => props.description = e.target.value)}
+            type="checkbox"
+            checked={showPeople}
+            onChange={(e) => setProp((props: any) => props.showPeople = e.target.checked)}
           />
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="showDocuments"
-              checked={props.showDocuments !== false}
-              onChange={(e) => setProp((props: OrganizationalStructureProps) => props.showDocuments = e.target.checked)}
-            />
-            <label htmlFor="showDocuments" className="text-design-sm">Mostrar gestão de documentos</label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="showPeople"
-              checked={props.showPeople !== false}
-              onChange={(e) => setProp((props: OrganizationalStructureProps) => props.showPeople = e.target.checked)}
-            />
-            <label htmlFor="showPeople" className="text-design-sm">Mostrar pessoas vinculadas</label>
-          </div>
-        </div>
+          <span className="text-design-sm">Mostrar aba de pessoas</span>
+        </label>
       </div>
     </div>
   );
@@ -760,11 +1074,10 @@ export const OrganizationalStructureSettings = () => {
   props: {
     title: "Estrutura Organizacional",
     description: "Gerencie a estrutura da sua organização e os documentos associados",
-    structureData: defaultStructureData,
     showDocuments: true,
-    showPeople: true
+    showPeople: true,
   },
   related: {
-    settings: OrganizationalStructureSettings
-  }
+    settings: OrganizationalStructureSettings,
+  },
 };
