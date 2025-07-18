@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import { OrganizationalStructure } from "./components/intranet/OrganizationalStructure";
 
 const OrganizationalStructureView = lazy(() => import("./pages/OrganizationalStructureView"));
+const DepartmentalIntranet = lazy(() => import("./pages/DepartmentalIntranet"));
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,11 @@ const App = () => (
           <Route path="/organizational-structure" element={
             <Suspense fallback={<div>Carregando...</div>}>
               <OrganizationalStructureView />
+            </Suspense>
+          } />
+          <Route path="/intranet" element={
+            <Suspense fallback={<div>Carregando...</div>}>
+              <DepartmentalIntranet />
             </Suspense>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
