@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Editor, Frame, Element } from '@craftjs/core';
 import { 
   Users, FileText, Settings, Search, Plus, Bell, Calendar, 
   MapPin, Phone, Mail, Target, Eye, TrendingUp, Award, 
@@ -18,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
+import { OrganizationalSelector } from '@/components/intranet/OrganizationalSelector';
 import orgStructureCover from '@/assets/org-structure-cover.jpg';
 
 // Interfaces
@@ -796,10 +798,11 @@ const DepartmentalIntranet: React.FC = () => {
           
           <div className="p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Visão Geral</TabsTrigger>
                 <TabsTrigger value="people">Pessoas</TabsTrigger>
                 <TabsTrigger value="documents">Documentos</TabsTrigger>
+                <TabsTrigger value="builder">Construtor</TabsTrigger>
               </TabsList>
               
               <div className="mt-6">
@@ -813,6 +816,30 @@ const DepartmentalIntranet: React.FC = () => {
                 
                 <TabsContent value="documents">
                   {renderDocumentsTab()}
+                </TabsContent>
+                
+                <TabsContent value="builder">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">Construtor de Conteúdo</h3>
+                      <p className="text-sm text-muted-foreground">Personalize a página do departamento</p>
+                    </div>
+                    
+                    <Editor
+                      resolver={{
+                        OrganizationalSelector
+                      }}
+                    >
+                      <div className="border rounded-lg p-4 min-h-[400px] bg-background">
+                        <Frame>
+                          <Element is="div" className="space-y-4">
+                            <h4 className="text-md font-medium mb-4">Componentes Disponíveis:</h4>
+                            <OrganizationalSelector />
+                          </Element>
+                        </Frame>
+                      </div>
+                    </Editor>
+                  </div>
                 </TabsContent>
               </div>
             </Tabs>
