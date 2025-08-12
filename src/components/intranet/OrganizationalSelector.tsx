@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNode, Element } from '@craftjs/core';
-import { Building2, ChevronDown, ChevronRight, Users, FileText, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Building2, ChevronDown, ChevronRight, Users, FileText, Settings, ExternalLink, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,6 +23,7 @@ interface OrganizationalSelectorProps {
   selectedDepartmentId?: string;
   showStats?: boolean;
   showManager?: boolean;
+  showAccessButton?: boolean;
   layout?: 'card' | 'compact' | 'banner';
 }
 
@@ -78,8 +80,10 @@ export const OrganizationalSelector: React.FC<OrganizationalSelectorProps> = ({
   selectedDepartmentId = '1',
   showStats = true,
   showManager = true,
+  showAccessButton = true,
   layout = 'card'
 }) => {
+  const navigate = useNavigate();
   const {
     connectors: { connect, drag },
     selected,
@@ -89,6 +93,12 @@ export const OrganizationalSelector: React.FC<OrganizationalSelectorProps> = ({
   }));
 
   const selectedDepartment = departments.find(dept => dept.id === selectedDepartmentId) || departments[0];
+
+  const handleAccessDepartment = () => {
+    // Simula navegação para página específica do departamento
+    // Em uma implementação real, seria algo como: /intranet/department/${selectedDepartment.id}
+    navigate('/intranet', { state: { selectedDepartment: selectedDepartment.id } });
+  };
 
   const renderCard = () => (
     <Card className="w-full">
@@ -124,6 +134,17 @@ export const OrganizationalSelector: React.FC<OrganizationalSelectorProps> = ({
             <span className="text-sm">Gerente: {selectedDepartment.manager}</span>
           </div>
         )}
+
+        {showAccessButton && (
+          <Button 
+            onClick={handleAccessDepartment}
+            className="w-full mt-3"
+            size="sm"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Acessar Página do Departamento
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
@@ -139,19 +160,26 @@ export const OrganizationalSelector: React.FC<OrganizationalSelectorProps> = ({
           )}
         </div>
       </div>
-      {showManager && (
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={selectedDepartment.managerAvatar} />
-          <AvatarFallback>{selectedDepartment.manager.charAt(0)}</AvatarFallback>
-        </Avatar>
-      )}
+      <div className="flex items-center space-x-2">
+        {showManager && (
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={selectedDepartment.managerAvatar} />
+            <AvatarFallback>{selectedDepartment.manager.charAt(0)}</AvatarFallback>
+          </Avatar>
+        )}
+        {showAccessButton && (
+          <Button onClick={handleAccessDepartment} size="sm" variant="outline">
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 
   const renderBanner = () => (
     <div className={`relative p-6 rounded-lg bg-gradient-to-r from-${selectedDepartment.color}-600 to-${selectedDepartment.color}-700 text-white`}>
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex-1">
           <h2 className="text-xl font-bold">{selectedDepartment.name}</h2>
           <p className="text-sm opacity-90 mt-1">{selectedDepartment.description}</p>
           {showStats && (
@@ -163,16 +191,29 @@ export const OrganizationalSelector: React.FC<OrganizationalSelectorProps> = ({
             </div>
           )}
         </div>
-        {showManager && (
-          <div className="text-center">
-            <Avatar className="h-12 w-12 mx-auto mb-2">
-              <AvatarImage src={selectedDepartment.managerAvatar} />
-              <AvatarFallback>{selectedDepartment.manager.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <p className="text-sm">Gerente</p>
-            <p className="text-xs opacity-90">{selectedDepartment.manager}</p>
-          </div>
-        )}
+        <div className="flex flex-col items-center space-y-3">
+          {showManager && (
+            <div className="text-center">
+              <Avatar className="h-12 w-12 mx-auto mb-2">
+                <AvatarImage src={selectedDepartment.managerAvatar} />
+                <AvatarFallback>{selectedDepartment.manager.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <p className="text-sm">Gerente</p>
+              <p className="text-xs opacity-90">{selectedDepartment.manager}</p>
+            </div>
+          )}
+          {showAccessButton && (
+            <Button 
+              onClick={handleAccessDepartment}
+              variant="secondary"
+              size="sm"
+              className="text-black"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Acessar
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -204,11 +245,13 @@ export const OrganizationalSelectorSettings: React.FC = () => {
     selectedDepartmentId,
     showStats,
     showManager,
+    showAccessButton,
     layout
   } = useNode((node) => ({
     selectedDepartmentId: node.data.props.selectedDepartmentId,
     showStats: node.data.props.showStats,
     showManager: node.data.props.showManager,
+    showAccessButton: node.data.props.showAccessButton,
     layout: node.data.props.layout
   }));
 
@@ -273,6 +316,16 @@ export const OrganizationalSelectorSettings: React.FC = () => {
             className="rounded"
           />
         </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">Mostrar Botão de Acesso</label>
+          <input
+            type="checkbox"
+            checked={showAccessButton}
+            onChange={(e) => setProp((props: OrganizationalSelectorProps) => props.showAccessButton = e.target.checked)}
+            className="rounded"
+          />
+        </div>
       </div>
     </div>
   );
@@ -283,6 +336,7 @@ export const OrganizationalSelectorSettings: React.FC = () => {
     selectedDepartmentId: '1',
     showStats: true,
     showManager: true,
+    showAccessButton: true,
     layout: 'card'
   },
   related: {
